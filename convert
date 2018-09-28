@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+
+# Convert an AdBlock Plus whitelist file to a PiHole-compatible whitelist.txt file
+
+require 'net/http'
+require 'uri'
+
+class String; alias starts_with? start_with?; end
+
+class PiholeWhitelistConverter
+
+  def initialize(input_file, format = :abp)
+    @input_file = input_file
+    @format = format
+  end
+
+  def convert
+    lines = []
+
+    input_content.each_line do |line|
+      next if line.starts_with?('!') # comment line
+
+      if line.starts_with?("@@") # exception line
+        match = line.match(/\|\|(.*)\$/)
+        if match
+          domain = match[1].sub('^*', '')
+          lines << domain
+        end
+      end
+    end
+
+    lines.join("\n")
+  end
+
+
+  private
+
+  def input_content
+    @input_content ||= if @input_file.starts_with?('http')
+      read_url(@input_file)
+    else
+      read_file(@input_file)
+    end
+  end
+
+  def read_file(file_name)
+    file = File.open(file_name, "r")
+    data = file.read
+    file.close
+    return data
+  end
+
+  def read_url(url)
+    Net::HTTP.get(URI.parse(url))
+  end
+end
+
+output = PiholeWhitelistConverter.new(ARGV[0], :abp).convert
+f = File.new('whitelist.txt', 'w')
+f.write(output)
+f.close
+puts "#{output.lines.count} entries saved to whitelist.txt."
