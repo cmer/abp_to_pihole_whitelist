@@ -2,6 +2,7 @@
 
 # Convert an AdBlock Plus whitelist file to a PiHole-compatible whitelist.txt file
 
+require 'optparse'
 require 'net/http'
 require 'uri'
 
@@ -55,8 +56,35 @@ class PiholeWhitelistConverter
   end
 end
 
-output = PiholeWhitelistConverter.new(ARGV[0], :abp).convert
-f = File.new('whitelist.txt', 'w')
-f.write(output)
-f.close
-puts "#{output.lines.count} entries saved to whitelist.txt."
+options = {}
+
+ARGV << '-h' if ARGV.empty?
+
+OptionParser.new do |opts|
+  opts.banner = "\nAdBlock Plus to Pihole whitelist converter.\n"
+
+  opts.on("-i", "--input PATH", "Input file path or URL") do |i|
+    options[:input_path] = i
+  end
+
+  opts.on("-o", "--output", "Path of the output file") do |o|
+    options[:output_path] = o
+  end
+
+  opts.on("-h", "--help", "Displays help") do
+    puts opts
+    puts "\n"
+    exit
+  end
+end.parse!
+
+output = PiholeWhitelistConverter.new(options[:input_path], :abp).convert
+
+if options[:output_path]
+  f = File.new(options[:output_path], 'w')
+  f.write(output)
+  f.close
+  puts "#{output.lines.count} entries saved to #{options[:output_path]}."
+else
+  puts output
+end

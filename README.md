@@ -2,9 +2,11 @@
 
 ## Usage
 ```
-./convert https://www.ebates.com/whitelist/ebates-cash-back-shopping.txt
+./convert -i https://www.ebates.com/whitelist/ebates-cash-back-shopping.txt
 # or
-./convert /path/to/file.txt
+./convert -i /path/to/file.txt
+# or
+./convert -i /path/to/file.txt -o /path/to/output.txt
 ```
 
 ## Requirements
